@@ -134,7 +134,7 @@ void EventLoop::queueInLoop(Functor cb)
 
     // 唤醒相应的，需要执行上面回调操作的loop的线程了
     // || callingPendingFunctors_的意思是：当前loop正在执行回调，但是loop又有了新的回调
-    if (!isInLoopThread() | callingPendingFunctors_)    // handleEvent期间也有可能调用queueInLoop
+    if (!isInLoopThread() || callingPendingFunctors_)    // handleEvent期间也有可能调用queueInLoop
     {
         wakeup();   // 唤醒loop所在线程
     }
