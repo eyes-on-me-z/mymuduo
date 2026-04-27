@@ -13,7 +13,7 @@ static int createNonBlocking()
 }
 
 Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr, bool reuseport)
-    :loop_(loop)
+    : loop_(loop)
     , acceptSocket_(createNonBlocking())    // socket
     , acceptChannel_(loop_, acceptSocket_.fd())
     , listenning_(false)

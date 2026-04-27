@@ -77,8 +77,8 @@ private:
     bool reading_;
 
     // 这里和Acceptor类似   Acceptor=》mainLoop    TcpConenction=》subLoop
-    std::shared_ptr<Socket> socket_;
-    std::shared_ptr<Channel> channel_;
+    std::unique_ptr<Socket> socket_;
+    std::unique_ptr<Channel> channel_;
 
     const InetAddress localAddr_;
     const InetAddress peerAddr_;
