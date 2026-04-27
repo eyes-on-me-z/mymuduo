@@ -88,7 +88,7 @@ int main()
 
 #### 什么是虚函数，它的作用是什么？
 
-在类的成员函数中，用virtual修饰的函数即为虚函数。当子类继承父类时，可通过重写虚函数是实现多态
+在类的成员函数中，用virtual修饰的函数即为虚函数。当子类继承父类时，可通过重写虚函数是实现多态的必要条件
 
 #### 虚函数的底层实现机制是什么？
 
@@ -173,3 +173,127 @@ struct 和 class 在 C++ 中唯一区别是：struct 默认访问权限和默认
 ​          堆（heap）：`new/malloc` 分配，向上生长
 
 ​          栈（stack）：局部变量、函数调用、返回地址，向下生长
+
+#### C++为什么需要完美转发 std::forward
+
+```c++
+void f(const string &s)
+{ cout << "left " << s << endl; }
+
+void f(string &&s)
+{ cout << "right " << s << endl; }
+
+void g(const string &s)
+{ f(s); }
+
+void g(string &&s)	// 原因在于右值引用本质上是左值，是可以取地址的即 f(s) 中s是左值
+{ f(s); }
+
+int main()
+{
+    g(string("hello1"));	// 结果是：left hello1
+    string s1("hello2");
+    g(s1);					// 结果是：left hello2
+
+    return 0;
+}
+// 我们希望 g(string("hello1")) 调用的应该是 f(string &&s)，g(s1) 调用的应该是 f(const string &s)
+// 但实际上调用的都是 f(const string &s)
+
+
+// 为了达到我们想要的效果，需要进行类型转换
+void f(const string &s)
+{ cout << "left " << s << endl; }
+
+void f(string &&s)
+{ cout << "right " << s << endl; }
+
+void g(const string &s)
+{ f(static_cast<const string &>s); }	// 调用的是f(const string &s)
+
+void g(string &&s)	
+{ f(static_cast<string &&>s); }	// 调用的是f(string &&s)
+
+
+// 但实际上不会去使用static_cast进行类型转换，而是使用std::forward
+void f(const string &s)
+{ cout << "left " << s << endl; }
+
+void f(string &&s)
+{ cout << "right " << s << endl; }
+
+void g(const string &s)
+{ f(std::forward<const string &>s); }	// 调用的是f(const string &s)
+
+void g(string &&s)	
+{ f(std::forward<string &&>s); }	// 调用的是f(string &&s)
+
+
+// 如果函数g()有n个参数，需要有2^n个重载函数
+g(const string &s1, string &&s2)
+{
+    f(std::forward<const string &>s1);
+    f(std::forward<string &&>s1);
+}
+
+// 考虑写成模板(以一个参数为例)
+template<class T>
+void g(T&& v)	// 这里不是右值引用，而是万能引用。如果传入实参是左值，那么T就被推导为实参引用类型T&
+{				// 如果是右值，那么T就被推导为 实参的非引用类型T
+    f(std::forward<T>(v));
+}
+```
+
+
+
+#### 如何定义一个只能在堆上（栈上）生成对象的类
+
+```c++
+class A	// 堆上创建
+{
+public:
+    // 工厂函数：唯一创建入口
+    static A* create()
+    {
+        return new A();
+    }
+
+    // 提供销毁接口
+    void destory()
+    {
+        delete this;
+    }
+
+protected:
+    A(){};  // 外部不能栈上创建
+    ~A(){}; // 外部不能 delete
+};
+```
+
+```c++
+class B	// 栈上创建
+{
+public:
+    B(){};
+    ~B(){};
+    void* operator new(size_t size) = delete;
+    void operator delete(void *b) = delete;   // 重载了new就需要重载delete
+private:
+};
+```
+
+#### 构造函数析构函数是否能抛出异常
+
+
+
+#### std::make_shared()与std::shared_ptr()的区别
+
+**`std::shared_ptr<T>(new T())`：** 进行**两次**独立的内存分配。（为对象 `T` 分配一次内存。为**控制块**（存储引用计数、弱引用计数等）分配一次内存。）
+
+![img](https://i-blog.csdnimg.cn/blog_migrate/6f9b0fdf4c2cb105d68a117842c32276.png)
+
+![img](https://i-blog.csdnimg.cn/blog_migrate/2454639141fbba29601631486118ccb8.png)
+
+内存分配的动作, 可以一次性完成. 这减少了内存分配的次数, 而内存分配是代价很高的操作。
+
+`make_shared` 只分配一次内存, 这看起来很好. 减少了内存分配的开销. 问题来了, `weak_ptr` 会保持控制块(强引用, 以及弱引用的信息)的生命周期 , 而因此连带着保持了对象分配的内存, 只有最后一个 `weak_ptr` 离开作用域时, 内存才会被释放. 原本强引用减为 0 时就可以释放的内存, 现在变为了强引用, 若引用都减为 0 时才能释放, 意外的延迟了内存释放的时间. 这对于内存要求高的场景来说, 是一个需要注意的问题. 
