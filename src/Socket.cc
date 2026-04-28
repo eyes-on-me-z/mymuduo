@@ -48,7 +48,7 @@ int Socket::accept(InetAddress *peeraddr)
 
 void Socket::shutdownWrite()
 {
-    if (::shutdown(sockfd_, SHUT_WR) < 0)
+    if (::shutdown(sockfd_, SHUT_WR) < 0)   // 发送FIN报文
     {
         LOG_ERROR("shutdownWrite error");
     }

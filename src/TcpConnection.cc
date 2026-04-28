@@ -87,6 +87,11 @@ void TcpConnection::shutdown()
     }
 }
 
+void TcpConnection::setTcpNoDelay(bool on)
+{
+    socket_->setTcpNoDelay(on);
+}
+
 // 连接建立
 void TcpConnection::connectionEstablished()
 {

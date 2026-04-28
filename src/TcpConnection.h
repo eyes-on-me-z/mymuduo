@@ -36,8 +36,10 @@ public:
 
     // 发送数据
     void send(const std::string &buf);
-    // 关闭连接
+    // 关闭连接（服务器主动关闭，先关闭写端，等对方关闭后，再关闭读端）
     void shutdown();
+
+    void setTcpNoDelay(bool on);
 
     void setConnectionCallback(const ConnectionCallback &cb)
     { connectionCallback_ = cb; }
