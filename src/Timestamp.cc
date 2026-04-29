@@ -1,6 +1,7 @@
-#include "Timestamp.h"
+#include <sys/time.h>
+#include <inttypes.h>
 
-#include <ctime>
+#include "Timestamp.h"
 
 Timestamp::Timestamp() : microSecondsSinceEpoch_(0) {}
 
@@ -8,23 +9,23 @@ Timestamp::Timestamp(int64_t microSecondsSinceEpoch)
     : microSecondsSinceEpoch_(microSecondsSinceEpoch)
 {}
 
+// 获取当前时间，并以微秒级时间戳形式返回一个 Timestamp 对象
 Timestamp Timestamp::now()
 {
-    return Timestamp(time(nullptr));
+    struct timeval tv;
+    gettimeofday(&tv, NULL);    // 获取当前系统时间
+    int64_t seconds = tv.tv_sec;
+    return Timestamp(seconds * kMicroSecondsPerSecond + tv.tv_usec);
 }
 
+// 秒.微秒 格式的时间字符串
 std::string Timestamp::toString() const
 {
-    char buf[64] = {0};
-    tm *tm_time = localtime(&microSecondsSinceEpoch_);
-    snprintf(buf, sizeof(buf), "%4d/%02d/%02d %02d:%02d:%02d",
-        tm_time->tm_year + 1900,
-        tm_time->tm_mon + 1,
-        tm_time->tm_mday,
-        tm_time->tm_hour,
-        tm_time->tm_min,
-        tm_time->tm_sec);
-    
+    char buf[32] = {0};
+    int64_t seconds = microSecondsSinceEpoch_ / kMicroSecondsPerSecond;
+    int64_t microseconds = microSecondsSinceEpoch_ % kMicroSecondsPerSecond;
+    // PRId64 = 跨平台打印 64 位整数
+    snprintf(buf, sizeof buf, "%" PRId64 ".%06" PRId64 "", seconds, microseconds);
     return buf;
 }
 

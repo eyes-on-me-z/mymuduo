@@ -7,12 +7,14 @@ class Timestamp
 public:
     Timestamp();
     explicit Timestamp(int64_t microSecondsSinceEpoch); //禁止“隐式类型转换”，只能显式调用构造函数
+    
+    bool valid() const { return microSecondsSinceEpoch_ > 0; }
     static Timestamp now();
     static Timestamp invalid()
     {
         return Timestamp();
     }
-    
+
     std::string toString() const;
 
     int64_t microSecondsSinceEpoch() const { return microSecondsSinceEpoch_; }
@@ -21,6 +23,16 @@ public:
 private:
     int64_t microSecondsSinceEpoch_;
 };
+
+inline bool operator<(Timestamp lhs, Timestamp rhs)
+{
+    return lhs.microSecondsSinceEpoch() < rhs.microSecondsSinceEpoch();
+}
+
+inline bool operator==(Timestamp lhs, Timestamp rhs)
+{
+    return lhs.microSecondsSinceEpoch() == rhs.microSecondsSinceEpoch();
+}
 
 // 如果是重复定时任务就会对此时间戳进行增加。
 inline Timestamp addTime(Timestamp timestamp, double seconds)

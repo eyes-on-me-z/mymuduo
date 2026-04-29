@@ -22,6 +22,7 @@ public:
         , sequence_(s_numCreated_.fetch_add(1) + 1)
     {}
 
+    // 定时器到期后，调用回调函数
     void run() const { callback_(); }
 
     Timestamp expiration() const { return expiration_; }
