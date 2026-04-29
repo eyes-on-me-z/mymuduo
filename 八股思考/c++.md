@@ -297,3 +297,30 @@ private:
 内存分配的动作, 可以一次性完成. 这减少了内存分配的次数, 而内存分配是代价很高的操作。
 
 `make_shared` 只分配一次内存, 这看起来很好. 减少了内存分配的开销. 问题来了, `weak_ptr` 会保持控制块(强引用, 以及弱引用的信息)的生命周期 , 而因此连带着保持了对象分配的内存, 只有最后一个 `weak_ptr` 离开作用域时, 内存才会被释放. 原本强引用减为 0 时就可以释放的内存, 现在变为了强引用, 若引用都减为 0 时才能释放, 意外的延迟了内存释放的时间. 这对于内存要求高的场景来说, 是一个需要注意的问题. 
+
+#### 什么不能被继承
+
+构造函数、析构函数、赋值运算符=、final关键字、构造函数和析构函数在private作用域内
+
+#### shared_ptr是线程安全的吗？
+
+同一个shared_ptr被多个线程“读”是安全的。2、同一个shared_ptr被多个线程“写”是不安全的。3、共享引用计数的不同的shared_ptr被多个线程”写“ 是安全的
+
+#### 为什么需要继承std::enable_shared_from_this<T>?
+
+```
+class Foo {
+public:
+    void func() {
+        std::shared_ptr<Foo> p(this); // 危险！
+    }
+};
+
+如果对象本来已经被别的 shared_ptr 管理：
+auto sp = std::make_shared<Foo>();
+sp 一个控制块（引用计数器A）
+p 一个新控制块（引用计数器B）
+```
+
+enable_shared_from_this它让对象内部知道：“我已经被哪个 shared_ptr 控制块管理着”。调用：shared_from_this()，得到的是：和原 shared_ptr 共用控制块的新 shared_ptr
+

@@ -34,11 +34,11 @@
 
 TcpConnection是短命的，生命周期不一定由我们控制，某个时刻客户端断开连接，我们并不能立马delete这个对象。其他地方也可能持有它的引用。当旧的TCP发来一个request，处理这个request需要一点时间，在此期间如果旧的TCP连接一断开，立马销毁对象，关闭旧的文件描述符，而新的连接的sockfd可能和旧的fd一样，造成原本往旧的tcp连接发送的数据发给了新的tcp连接。为了应对这种情况，使用shared_ptr来管理TcpConnection的生命周期。
 
+#### muduo主动关闭连接和被动关闭连接行为
 
+主动关闭连接：TcpConnection::shutdown() => TcpConnection::shutdownInLoop() => Socket::shutdownWrite（关闭本地写端，等对方关闭后，再关闭本地读端，确保不会漏收数据）
 
-
-
-
+被动关闭：TcpConnection::handleClose() => connectionCallback() 和 closeCallback() => TcpServer::removeConnection => TcpServer::removeConnectionInLoop => TcpConnection::connectionDestoryed => channel_->remove()
 
 
 
