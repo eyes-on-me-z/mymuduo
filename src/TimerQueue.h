@@ -26,7 +26,7 @@ public:
 private:
     using Entry = std::pair<Timestamp, Timer*>;
     using TimerList = std::set<Entry>;  // 最早到期的定时器在 最前面（begin）
-    using ActiveTimer = std::pair<Timer*, int64_t>;
+    using ActiveTimer = std::pair<Timer*, int64_t>; // 保存目前有效的timer
     using ActiveTimerSet = std::set<ActiveTimer>;
 
     // 在自己所属的loop中添加定时器

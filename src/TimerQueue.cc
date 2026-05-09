@@ -140,8 +140,8 @@ void TimerQueue::cancelInLoop(TimerId timerId)
         activeTimers_.erase(it);
     }
     else if (callingExpiredTimers_) // 所需要取消的定时器正在被调用
-    {
-        cancelingTimers_.insert(timer);
+    {                               // 为了应对自注销的情况，即在回调函数中注销当前定时器
+        cancelingTimers_.insert(timer); // 会在reset函数中删除定时器
     }
 }
 
@@ -195,7 +195,7 @@ void TimerQueue::reset(const std::vector<Entry> &expired, Timestamp now)
     {
         ActiveTimer timer(it.second, it.second->sequence());
         if (it.second->repeat()
-            && cancelingTimers_.find(timer) == cancelingTimers_.end())
+            && cancelingTimers_.find(timer) == cancelingTimers_.end())  // 可重复且没有取消的定时器
         {
             it.second->restart(now);
             insert(it.second);
