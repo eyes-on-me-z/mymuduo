@@ -3,6 +3,7 @@
 #include "EventLoop.h"
 #include "Logger.h"
 #include "Channel.h"
+#include "TimerQueue.h"
 
 /*
 线程本地存储（TLS）
@@ -138,6 +139,33 @@ void EventLoop::queueInLoop(Functor cb)
     {
         wakeup();   // 唤醒loop所在线程
     }
+}
+
+// time时刻执行回调函数cb
+TimerId EventLoop::runAt(Timestamp time, TimerCallback cb)
+{
+    return timerQueue_->addTimer(std::move(cb), time, 0.0);
+}
+
+// 当前时刻延迟delay后执行回调函数cb
+TimerId EventLoop::runAfter(double delay, TimerCallback cb)
+{
+    // 当前时刻延迟delay
+    Timestamp time(addTime(Timestamp::now(), delay));
+    return runAt(time, std::move(cb));
+}
+
+// 当前时刻开始，每隔interval执行回调函数cb
+TimerId EventLoop::runEvery(double interval, TimerCallback cb)
+{
+    Timestamp time(addTime(Timestamp::now(), interval));
+    return timerQueue_->addTimer(std::move(cb), time, interval);
+}
+
+// 取消定时器
+void EventLoop::cancel(TimerId timerId)
+{
+    return timerQueue_->cancel(timerId);
 }
 
 // 用来唤醒loop所在的线程的，向wakeupfd_写一个数据，wakeupChannel就发生读事件，当前loop线程就会被唤醒

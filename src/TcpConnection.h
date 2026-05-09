@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <atomic>
+#include <any>
 
 #include "noncopyable.h"
 #include "InetAddress.h"
@@ -36,10 +37,17 @@ public:
 
     // 发送数据
     void send(const std::string &buf);
+
     // 关闭连接（服务器主动关闭，先关闭写端，等对方关闭后，再关闭读端）
     void shutdown();
 
     void setTcpNoDelay(bool on);
+
+    void setContext(const std::any &context)
+    { context_ = context; }
+
+    const std::any& getContext() const
+    { return context_; }
 
     void setConnectionCallback(const ConnectionCallback &cb)
     { connectionCallback_ = cb; }
@@ -53,12 +61,12 @@ public:
     void setCloseCallback(const CloseCallback &cb)
     { closeCallback_ = cb; }
 
-    void setHigeWaterMarkCallback(const HighWaterMarkCallback &cb, size_t highWaterMark)
+    void setHighWaterMarkCallback(const HighWaterMarkCallback &cb, size_t highWaterMark)
     { highWaterMarkCallback_ = cb; highWaterMark_ = highWaterMark; }
 
-    // 连接建立
+    // 连接建立, tcpserver调用
     void connectionEstablished();
-    // 连接销毁
+    // 连接销毁, tcpserver调用
     void connectionDestoryed();
 
 private:
@@ -95,4 +103,6 @@ private:
 
     Buffer inputBuffer_;    // 接收数据的缓冲区   用户  <= buffer <= 内核
     Buffer outputBuffer_;   // 发送数据的缓冲区   用户  => buffer <= 内核
+
+    std::any context_;  // 用户自定义数据(这里主要用于存储时间轮的WeakEntryPtr)
 };

@@ -17,8 +17,8 @@ public:
         newConnectionCallback_ = cb;
     }
 
-    bool listenning() const { return listenning_; }
     void listen();
+    bool listenning() const { return listenning_; }
 
 private:
     void handleRead();
@@ -28,4 +28,5 @@ private:
     Channel acceptChannel_;
     NewConnectionCallback newConnectionCallback_;
     bool listenning_;
+    int idleFd_;    // 防止连接fd数量超过上限，用于占位的fd
 };

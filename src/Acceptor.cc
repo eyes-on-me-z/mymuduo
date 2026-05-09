@@ -1,3 +1,6 @@
+#include <unistd.h>
+#include <fcntl.h>
+
 #include "Acceptor.h"
 #include "Logger.h"
 
@@ -17,6 +20,7 @@ Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr, bool reusepor
     , acceptSocket_(createNonBlocking())    // socket
     , acceptChannel_(loop_, acceptSocket_.fd())
     , listenning_(false)
+    , idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC))    // 拿到一个空闲文件描述符
 {
     acceptSocket_.setReuseAddr(true);
     acceptSocket_.setReusePort(true);
@@ -30,6 +34,7 @@ Acceptor::~Acceptor()
 {
     acceptChannel_.disableAll();
     acceptChannel_.remove();
+    ::close(idleFd_);
 }
 
 void Acceptor::listen()
@@ -61,6 +66,11 @@ void Acceptor::handleRead()
         LOG_ERROR("%s:%s:%d accept err: %d\n", __FILE__, __FUNCTION__, __LINE__, errno);
         if (errno == EMFILE)    // 达到最大并发连接数，无法建立新连接
         {
+            // 先关闭空闲连接，再accept新连接，关闭新连接，再打开空闲连接
+            ::close(idleFd_);
+            idleFd_ = ::accept(acceptSocket_.fd(), NULL, NULL);
+            ::close(idleFd_);
+            idleFd_ = ::open("/dev/null", O_RDONLY | O_CLOEXEC);
             LOG_ERROR("%s:%s:%d sockfd reached limit!\n", __FILE__, __FUNCTION__, __LINE__);
         }
     }

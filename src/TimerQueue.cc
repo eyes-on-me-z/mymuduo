@@ -13,6 +13,7 @@
 static int createTimerfd()
 {
     //  CLOCK_MONOTONIC: 单调递增、永不回退的系统时钟
+    // 当超时的时候，timerfd就变得可读
     int timerfd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
 
     if (timerfd < 0)
@@ -43,10 +44,10 @@ void readTimerfd(int timerfd, Timestamp now)
 {
     uint64_t howmany;
     ssize_t n = ::read(timerfd, &howmany, sizeof howmany);
-    LOG_INFO("TimerQueue::handleRead() %llu at %s\n", howmany, now.toString().c_str());
+    LOG_INFO("TimerQueue::handleRead() %lu at %s\n", howmany, now.toString().c_str());
     if (n != sizeof howmany)
     {
-        LOG_ERROR("TimerQueue::handleRead() reads %d bytes instead of 8\n", n);
+        LOG_ERROR("TimerQueue::handleRead() reads %zd bytes instead of 8\n", n);
     }
 }
 

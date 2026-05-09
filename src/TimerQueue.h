@@ -12,6 +12,7 @@ class EventLoop;
 class Timer;
 class TimerId;
 
+// timerfd的超时时刻总是设置为TimerQueue中最小的Timer的超时时刻
 class TimerQueue : noncopyable
 {
 public:

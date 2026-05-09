@@ -10,6 +10,10 @@
 #include "Timestamp.h"
 #include "EPollPoller.h"
 #include "CurrentThread.h"
+#include "TimerId.h"
+#include "Callbacks.h"
+
+class TimerQueue;
 
 // 事件循环类  主要包含了两个大模块 Channel   Poller（epoll的抽象）
 class EventLoop : noncopyable
@@ -31,6 +35,15 @@ public:
     void runInLoop(Functor cb);
     // 把cb放入队列中，唤醒loop所在的线程，执行cb
     void queueInLoop(Functor cb);
+
+    // time时刻执行回调函数cb
+    TimerId runAt(Timestamp time, TimerCallback cb);
+    // 当前时刻延迟delay后执行回调函数cb
+    TimerId runAfter(double delay, TimerCallback cb);
+    // 当前时刻开始，每隔interval执行回调函数cb
+    TimerId runEvery(double interval, TimerCallback cb);
+    // 取消定时器
+    void cancel(TimerId timerId);
 
     // 用来唤醒loop所在的线程的
     void wakeup();
@@ -56,6 +69,8 @@ private:
 
     Timestamp pollReturnTime_;  // poller返回发生事件的channels的时间点
     std::unique_ptr<Poller> poller_;
+
+    std::unique_ptr<TimerQueue> timerQueue_;
 
     int wakeupFd_;  // 主要作用，当mainLoop获取一个新用户的channel，通过轮询算法选择一个subloop，通过该成员唤醒subloop处理channel
     std::unique_ptr<Channel> wakeupChannel_;
