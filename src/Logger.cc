@@ -3,6 +3,10 @@
 // 获取日志唯一的实列对象
 Logger &Logger::instance()
 {
+    /*
+    静态对象，它的生命周期是“程序生命周期”，不会随调用处的作用域结束而析构。
+    所以下次调用 Logger::instance() 仍然返回同一个对象，直到进程退出时才执行析构。
+    */
     static Logger logger;
     return logger;
 }
