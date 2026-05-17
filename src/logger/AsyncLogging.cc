@@ -3,18 +3,19 @@
 #include "Timestamp.h"
 
 AsyncLogging::AsyncLogging(const std::string &basename, off_t rollSize, int flushInterval)
-    : flushInterval_(flushInterval)
+    : flushInterval_(flushInterval) // 把buffer中的数据写入文件的时间间隔
     , running_(false)
     , basename_(basename)
-    , rollSize_(rollSize)
+    , rollSize_(rollSize)   // 日志文件超过多大时创建新的日志文件
     , thread_(std::bind(&AsyncLogging::threadFunc, this), "Logging")
     , mutex_()
     , cond_()
-    , currentBuffer_(new Buffer)
-    , nextBuffer_(new Buffer)
+    , currentBuffer_(new Buffer)    // 4M
+    , nextBuffer_(new Buffer)   // 4M
     , buffers_()
 {
-    currentBuffer_->bzero();
+    // 预热，提前开辟好内存，避免缺页异常
+    currentBuffer_->bzero();    
     nextBuffer_->bzero();
     buffers_.reserve(16);
 }
@@ -54,6 +55,7 @@ void AsyncLogging::append(const char *logline, int len)
     }
 }
 
+// 后端线程
 void AsyncLogging::threadFunc()
 {
     // output有写入磁盘的接口，异步日志后端的日志信息只会来自buffersToWrite，也就是说不会

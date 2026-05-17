@@ -4,9 +4,9 @@
 #include "LogStream.h"
 
 // 用于把数字转化位对应的字符
-static const char digits[] = {'9', '8', '7', '6', '5', '4', '3', '2', '1', '0',
-                                '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+static const char digits[] = "9876543210123456789";
 
+// 用于打印16进制的指针类型
 static const char digitsHex[] = "0123456789ABCDEF";
 
 // 将指针格式化到buf中，返回所占字符个数(0x1234 => '1234')
@@ -26,6 +26,36 @@ size_t convertHex(char buf[], uintptr_t value)
     std::reverse(buf, p);   // 低位——高位 => 高位——低位
 
     return p - buf;
+}
+
+// 将整数处理成字符串并添加到buffer_中
+template<class T>
+void LogStream::formatInteger(T num)
+{
+    if (buffer_.avail() >= kMaxNumericSize)
+    {
+        char *start = buffer_.current();
+        char *cur = start;;
+        const char *zero = digits + 9;
+        bool negative = (num < 0);  // 是否为负数
+
+        // 从数字的末位开始转化成字符，最后再翻转字符串
+        do
+        {
+            int remainder = static_cast<int>(num % 10);
+            *(cur++) = zero[remainder];
+            num /= 10;
+        } while (num != 0);
+        
+        if (negative)
+        {
+            *(cur++) = '-'; // 如果是负数就添加负号
+        }
+        *cur = '\0';
+
+        std::reverse(start, cur);
+        buffer_.add(static_cast<int>(cur - start));
+    }
 }
 
 LogStream& LogStream::operator<<(bool v)
@@ -75,6 +105,7 @@ LogStream& LogStream::operator<<(long long v)
     formatInteger(v);
     return *this;
 }
+
 LogStream& LogStream::operator<<(unsigned long long v)
 {
     formatInteger(v);
@@ -91,6 +122,7 @@ LogStream& LogStream::operator<<(double v)
 {
     if (buffer_.avail() >= kMaxNumericSize)
     {
+        // 最多保留 12 位有效数字
         int len = snprintf(buffer_.current(), kMaxNumericSize, "%.12g", v);
         buffer_.add(len);
     }
@@ -103,6 +135,7 @@ LogStream& LogStream::operator<<(char v)
     return *this;
 }
 
+// 输出指针的值
 LogStream& LogStream::operator<<(const void *p)
 {
     // 把指针 p 转换成一个整数类型 uintptr_t
@@ -115,7 +148,6 @@ LogStream& LogStream::operator<<(const void *p)
         size_t len = convertHex(buf + 2, v);
         buffer_.add(len + 2);
     }
-
     return *this;
 }
 
@@ -129,7 +161,6 @@ LogStream& LogStream::operator<<(const char *str)
     {
         buffer_.append("(null)", 6);
     }
-
     return *this;
 }
 
@@ -148,7 +179,7 @@ LogStream& LogStream::operator<<(const std::string &str)
 
 LogStream& LogStream::operator<<(const SmallBuffer &buf)
 {
-    *this << buf.toString();
+    *this << buf.toString();    // 调用的是LogStream::operator<<(const std::string &str)
     return *this;
 }
 
@@ -158,31 +189,19 @@ LogStream& LogStream::operator<<(const GeneralTemplate &g)
     return *this;
 }
 
-// 将整数处理成字符串并添加到buffer_中
-template<class T>
-void LogStream::formatInteger(T num)
+
+#if 0
+// 编译命令：g++ ./src/logger/LogStream.cc -o testLogStream -I ./src
+#include <iostream>
+using namespace std;
+int main()
 {
-    if (buffer_.avail() >= kMaxNumericSize)
-    {
-        char *start = buffer_.current();
-        char *cur = start;;
-        const char *zero = digits + 9;
-        bool negative = (num < 0);
-
-        do
-        {
-            int remainder = static_cast<int>(num % 10);
-            *(cur++) = zero[remainder];
-            num /= 10;
-        } while (num != 0);
-        
-        if (negative)
-        {
-            *(cur++) = '-';
-        }
-        *cur = '\0';
-
-        std::reverse(start, cur);
-        buffer_.add(static_cast<int>(cur - start));
-    }
+    // 把kSamllBuffer改为50，下面的字符串长一点，就会出现buffer存不下从而丢弃的情况
+    LogStream logstream;
+    logstream << -3.1415926 << &logstream << 1234567899999;
+    logstream << "woxihuanni";
+    const LogStream::SmallBuffer &buffer = logstream.buffer();
+    cout << buffer.data() << endl;
+    return 0;
 }
+#endif

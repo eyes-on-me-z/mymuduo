@@ -13,6 +13,7 @@
 class AsyncLogging : noncopyable
 {
 public:
+    //（basename时间.log）
     AsyncLogging(const std::string &basename, off_t rollSize, int flushInterval = 3);
     ~AsyncLogging()
     {
@@ -42,13 +43,14 @@ private:
     void threadFunc();
 
     using Buffer = FixedBuffer<kLargeBuffer>;   // 4M
+    // BufferVector存储独占指针的目的是：从BufferVector中弹出元素（Buffer）后会自动析构
     using BufferVector = std::vector<std::unique_ptr<Buffer>>;
     using BufferPtr = BufferVector::value_type;
 
-    const int flushInterval_;
+    const int flushInterval_;   // 刷新时间间隔（s）
     std::atomic<bool> running_;
-    const std::string basename_;
-    const off_t rollSize_;
+    const std::string basename_;    // 日志文件名的公共的部分
+    const off_t rollSize_;          // 日志文件超过多大时创建新的日志文件
     Thread thread_;
     std::mutex mutex_;
     std::condition_variable cond_;

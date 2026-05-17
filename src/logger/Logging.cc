@@ -5,9 +5,9 @@
 
 namespace ThreadInfo
 {
-    __thread char t_errnobuf[512];
-    __thread char t_time[64];
-    __thread time_t t_lastSecond;
+    __thread char t_errnobuf[512];  // 存储错误信息
+    __thread char t_time[64];   // 存储格式化的时间字符串
+    __thread time_t t_lastSecond;   // 存储最近一次调用的时间
 };
 
 const char* getErrnoMsg(int savedErrno)
@@ -17,7 +17,7 @@ const char* getErrnoMsg(int savedErrno)
     return strerror_r(savedErrno, ThreadInfo::t_errnobuf, sizeof(ThreadInfo::t_errnobuf));
 }
 
-// 数组变量
+// 数组变量，返回日志等级对应的字符串
 const char* LogLevelName[Logger::LogLevel::NUM_LOG_LEVELS] = 
 {
     "TRACE ",
@@ -28,6 +28,7 @@ const char* LogLevelName[Logger::LogLevel::NUM_LOG_LEVELS] =
     "FATAL ",
 };
 
+// 初始日志等级默认是 INFO
 Logger::LogLevel initLogLevel()
 {
     return Logger::LogLevel::INFO;
@@ -49,7 +50,9 @@ static void defaultFlush()
     fflush(stdout);
 }
 
+// 默认向终端输出
 Logger::OutputFunc g_output = defaultOutput;
+// 默认向终端刷新
 Logger::FlushFunc g_flush = defaultFlush;
 
 // level默认为INFO等级
@@ -57,11 +60,11 @@ Logger::Logger(const char *file, int line)
     : impl_(INFO, 0, file, line)
 {}
 
-
 Logger::Logger(const char *file, int line, Logger::LogLevel level)
     :impl_(level, 0, file, line)
 {}
 
+// 可以打印调用函数
 Logger::Logger(const char *file, int line, Logger::LogLevel level, const char *func)
     :impl_(level, 0, file, line)
 {
@@ -77,7 +80,7 @@ Logger::~Logger()
     g_output(buf.data(), buf.length());
     if (impl_.level_ == FATAL)
     {
-        g_flush();
+        g_flush();  // 把缓冲区的数据强制写入指定的位置（默认是写入stdout）
         abort();
     }
 
@@ -88,11 +91,13 @@ void Logger::setLogLevel(LogLevel level)
     g_logLevel = level;
 }
 
-void Logger::setOutput(OutputFunc out)   // 设置日志输出位置
+// 设置日志输出位置（由终端改为其他位置）
+void Logger::setOutput(OutputFunc out)   
 {
     g_output = out;
 }
 
+// 设置缓冲区刷新位置（由终端改为其他位置）
 void Logger::setFlush(FlushFunc flush)
 {
     g_flush = flush;
@@ -146,3 +151,11 @@ void Logger::Impl::finish()
 {
     stream_ << " - " << GeneralTemplate(basename_.data_, basename_.size_) << ':' << line_ << '\n';
 }
+
+// 编译指令：g++ ./src/logger/Logging.cc ./src/logger/LogStream.cc ./src/Timestamp.cc -I ./src -o testLogging
+#if 0
+int main()
+{
+    LOG_INFO << "woxihuanni";
+}
+#endif

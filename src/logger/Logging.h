@@ -9,7 +9,8 @@
 // SourceFile的作用是提取文件名
 /**
  * 找出data中出现/最后一次的位置，从而获取具体的文件名
- * 2022/10/26/test.log
+ * 2022/10/26/test.log => test.log
+ * test.log => test.log
  */
 class SourceFile
 {
@@ -26,10 +27,13 @@ public:
         size_ = static_cast<int>(strlen(data_));
     }
 
-    const char *data_;
-    int size_;  // 文件名 字符数
+    const char *data_;  // 文件名起始地址
+    int size_;  // 文件名字符数
 };
 
+// 默认是往终端（stdout）输出日志，而不是文件
+// 每次调用都创建临时对象，往缓冲区中写入日志，析构的时候往终端输出
+// 日期 时间 微秒 日志等级 正文 文件名 行号
 class Logger
 {
 public:
@@ -44,18 +48,22 @@ public:
         NUM_LOG_LEVELS,
     };
 
+    // 所在文件的文件名，所在行号
     Logger(const char *file, int line);
     Logger(const char *file, int line, LogLevel level);
     Logger(const char *file, int line, LogLevel level, const char *func);
     ~Logger();
 
+    // 返回的LogStream对象可以继续执行<<操作符，流是可以改变的，默认是stdout
     LogStream& stream() { return impl_.stream_; }
 
+    // 返回g_logLevel（默认是INFO）
     static LogLevel logLevel();
     static void setLogLevel(LogLevel level);
 
-    // 输出函数和刷新缓冲区函数
+    // 输出函数
     using OutputFunc = std::function<void(const char*, int)>;
+    // 刷新缓冲区函数
     using FlushFunc = std::function<void()>;
     /**
      * 下面两个设置为静态函数的原因：本文件结尾的宏定义可见，每一条日志都是临时创建一个Logger对象，所以每条日志结束后马上析构

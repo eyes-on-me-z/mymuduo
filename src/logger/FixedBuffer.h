@@ -14,8 +14,8 @@
 */
 
 // Buffer默认提供一下两种大小
-const int kSmallBuffer = 4096;
-const int kLargeBuffer = 4096 * 1024;
+const int kSmallBuffer = 4096;  // 4KB
+const int kLargeBuffer = 4096 * 1024;   // 4MB
 
 // Buffer的大小（可以是任意大于0的整数，但是日志系统默认用到的是kSmallBuffer和kLargeBuffer）
 template <int SIZE>
@@ -43,7 +43,7 @@ public:
     // 获取缓冲区剩余字节数
     int avail() const { return static_cast<int>(end() - cur_); }
 
-    void add(size_t len) { cur_ += len};
+    void add(size_t len) { cur_ += len; }
     void reset() { cur_ = data_; }
     void bzero() { ::bzero(data_, sizeof(data)); }
     std::string toString() const { return std::string(data_, length()); }

@@ -25,7 +25,7 @@ public:
 private:
     size_t write(const char *data, size_t len);
 
-    FILE *fp_;  // 文件指针
+    FILE *fp_;              // 文件指针
     char buffer_[64*1024];  // 64KB缓冲区
     off_t writtenBytes_;    // 指示文件偏移量(指示当前已经文件(注意不是buffer_)写入多少字节)
 };
