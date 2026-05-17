@@ -1,7 +1,7 @@
 #include "FileUtil.h"
 #include "Logging.h" // 使用 getErrnoMsg
 
-explicit FileUtil::FileUtil(const std::string &fileName)
+FileUtil::FileUtil(const std::string &fileName)
     : fp_(::fopen(fileName.c_str(), "ae"))  // ‘a’是追加，'e'表示O_CLOEXEC
     , writtenBytes_(0)
 {

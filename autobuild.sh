@@ -18,16 +18,16 @@ cd $(pwd)/build &&  # 进入 build 目录
 cd ..
 
 # 把头文件拷贝到 /usr/include/mymuduo  so库拷贝到  /usr/lib     PATH
-if [ ! -d /usr/include/mymuduo ]; then
-    mkdir /usr/include/mymuduo
+if [ ! -d /usr/local/include/mymuduo ]; then
+    mkdir /usr/local/include/mymuduo
 fi
 
-for header in ./src/*.h
+for header in $(find ./src -name "*.h*")
 do 
-    cp $header /usr/include/mymuduo
+    cp $header /usr/local/include/mymuduo
 done
 
-cp $(pwd)/lib/libmymuduo.so /usr/lib
+cp $(pwd)/lib/libmymuduo.so /usr/local/lib
 
 # 刷新动态库缓存
 ldconfig

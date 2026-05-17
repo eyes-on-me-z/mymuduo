@@ -1,5 +1,7 @@
 #pragma once
 
+// 简易日志
+
 #include <string>
 #include <iostream>
 

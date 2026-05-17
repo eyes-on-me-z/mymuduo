@@ -45,7 +45,7 @@ public:
 
     void add(size_t len) { cur_ += len; }
     void reset() { cur_ = data_; }
-    void bzero() { ::bzero(data_, sizeof(data)); }
+    void bzero() { ::bzero(data_, sizeof(data_)); }
     std::string toString() const { return std::string(data_, length()); }
 
 private:

@@ -1,5 +1,7 @@
 #include "Logger.h"
 
+// 简易日志
+
 // 获取日志唯一的实列对象
 Logger &Logger::instance()
 {
