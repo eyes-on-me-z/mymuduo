@@ -28,8 +28,8 @@ TcpServer::TcpServer(EventLoop *loop,
     , name_(nameArg)
     , acceptor_(new Acceptor(loop_, listenAddr, option == kReusePort))
     , threadPool_(new EventLoopThreadPool(loop_, name_))
-    , connectionCallback_()
-    , messageCallback_()
+    , connectionCallback_(defaultConnectionCallback)
+    , messageCallback_(defaultMessageCallback)
     , nextConnId_(1)
     , started_(0)
 {
