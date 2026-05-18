@@ -1,5 +1,5 @@
 #include "ThreadPool.h"
-#include "Logger.h"
+#include "Logging.h"
 
 ThreadPool::ThreadPool(const std::string &nameArg)
     : mutex_()
@@ -104,7 +104,7 @@ void ThreadPool::runInThread()
     }
     catch(...)
     {
-        LOG_ERROR("runInThread throw exception");
+        LOG_ERROR << "exception caught in ThreadPool";
     }
 }
 

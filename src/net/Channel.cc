@@ -1,6 +1,6 @@
 #include <sys/epoll.h>
 
-#include "Logger.h"
+#include "Logging.h"
 #include "Channel.h"
 #include "EventLoop.h"
 
@@ -62,7 +62,7 @@ void Channel::handleEvent(Timestamp receiveTime)
 // 根据poller通知的channel发生的具体事件，由channel负责调用具体的回调函数
 void Channel::handleEventWithGuard(Timestamp receiveTime)
 {
-    LOG_INFO("channel handleEvent revents: %d\n", revents_);
+    LOG_INFO << "channel handleEvent revents: " << revents_;
 
     // 对端关闭连接（挂断）, 并且当前没有可读事件。
     if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN))

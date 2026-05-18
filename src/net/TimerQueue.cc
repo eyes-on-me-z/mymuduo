@@ -1,5 +1,5 @@
 #include "TimerQueue.h"
-#include "Logger.h"
+#include "Logging.h"
 #include "TimerId.h"
 #include "Timer.h"
 #include "EventLoop.h"
@@ -18,7 +18,7 @@ static int createTimerfd()
 
     if (timerfd < 0)
     {
-        LOG_FATAL("failed in timerfd_create");
+        LOG_FATAL << "Failed in timerfd_create";
     }
     return timerfd;
 }
@@ -44,10 +44,10 @@ void readTimerfd(int timerfd, Timestamp now)
 {
     uint64_t howmany;
     ssize_t n = ::read(timerfd, &howmany, sizeof howmany);
-    LOG_INFO("TimerQueue::handleRead() %lu at %s\n", howmany, now.toString().c_str());
+    LOG_TRACE << "TimerQueue::handleRead() " << howmany << " at " << now.toString();
     if (n != sizeof howmany)
     {
-        LOG_ERROR("TimerQueue::handleRead() reads %zd bytes instead of 8\n", n);
+        LOG_ERROR << "TimerQueue::handleRead() reads " << n << " bytes instead of 8";
     }
 }
 
@@ -69,7 +69,7 @@ static void resetTimerfd(int timerfd, Timestamp expiration)
     int ret = ::timerfd_settime(timerfd, 0, &newValue, &oldValue);
     if (ret)
     {
-        LOG_ERROR("timerfd_settime()\n");
+        LOG_ERROR << "timerfd_settime failed";
     }
 }
 

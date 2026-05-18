@@ -2,14 +2,14 @@
 #include <fcntl.h>
 
 #include "Acceptor.h"
-#include "Logger.h"
+#include "Logging.h"
 
 static int createNonBlocking()
 {
     int sockfd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if (sockfd < 0)
     {
-        LOG_FATAL("%s:%s%d listen socket create err: %d\n", __FILE__, __FUNCTION__, __LINE__, errno);
+        LOG_FATAL << "listen socket create err: " << errno;
     }
 
     return sockfd;
@@ -63,7 +63,7 @@ void Acceptor::handleRead()
     else
     {
         // 见 238 页
-        LOG_ERROR("%s:%s:%d accept err: %d\n", __FILE__, __FUNCTION__, __LINE__, errno);
+        LOG_ERROR << "in Acceptor::handleRead(), accept error: " << errno;
         if (errno == EMFILE)    // 达到最大并发连接数，无法建立新连接
         {
             // 先关闭空闲连接，再accept新连接，关闭新连接，再打开空闲连接
@@ -71,7 +71,7 @@ void Acceptor::handleRead()
             idleFd_ = ::accept(acceptSocket_.fd(), NULL, NULL);
             ::close(idleFd_);
             idleFd_ = ::open("/dev/null", O_RDONLY | O_CLOEXEC);
-            LOG_ERROR("%s:%s:%d sockfd reached limit!\n", __FILE__, __FUNCTION__, __LINE__);
+            LOG_ERROR << "sockfd reached limit!";
         }
     }
 }

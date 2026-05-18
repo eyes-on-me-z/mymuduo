@@ -1,7 +1,7 @@
 #include <unistd.h>
 
 #include "TcpConnection.h"
-#include "Logger.h"
+#include "Logging.h"
 #include "Socket.h"
 #include "Channel.h"
 #include "EventLoop.h"
@@ -13,7 +13,7 @@ static EventLoop* CheckLoopNotNull(EventLoop *loop)
 {
     if (loop == nullptr)
     {
-        LOG_FATAL("%s:%s:%d TcpConnection Loop is null!\n", __FILE__, __FUNCTION__, __LINE__);
+        LOG_FATAL << "TcpConnection Loop is null!";
     }
     return loop;
 }
@@ -47,14 +47,14 @@ TcpConnection::TcpConnection(EventLoop *loop,
         std::bind(&TcpConnection::handleError, this)
     );
 
-    LOG_INFO("TcpConnection::ctor[%s] at fd=%d\n", name_.c_str(), sockfd);
+    LOG_INFO << "TcpConnection::ctor[" << name_ << "] at fd=" << sockfd;
     socket_->setKeepAlive(true);
 }
             
 TcpConnection::~TcpConnection()
 {
-    LOG_INFO("TcpConnection::dtor[%s] at fd=%d state=%d\n",
-        name_.c_str(), channel_->fd(), (int)state_);
+    LOG_INFO << "TcpConnection::dtor[" << name_ << "] at fd=" <<
+                channel_->fd() << " state=" << (int)state_;
 }
 
 // 发送数据（供用户发送数据）
@@ -131,7 +131,7 @@ void TcpConnection::handleRead(Timestamp receiveTime)
     else
     {
         errno = saveError;
-        LOG_ERROR("TcpConnection::handleRead\n");
+        LOG_ERROR << "TcpConnection::handleRead() failed";
         handleError();
     }
 }
@@ -165,12 +165,12 @@ void TcpConnection::handleWrite()
         }
         else
         {
-            LOG_ERROR("TcpConnection::handleWrite");
+            LOG_ERROR << "TcpConnection::handleWrite() failed";
         }
     }
     else
     {
-        LOG_ERROR("TcpConnection fd=%d is down, no more writing \n", channel_->fd());
+        LOG_ERROR << "TcpConnection fd=" << channel_->fd() << " is down, no more writing";
     }
 
 }
@@ -178,7 +178,7 @@ void TcpConnection::handleWrite()
 // poller => channel::closeCallback => TcpConnection::handleClose
 void TcpConnection::handleClose()
 {
-    LOG_INFO("TcpConnection::handleClose fd=%d state=%d \n", channel_->fd(), (int)state_);
+    LOG_INFO << "TcpConnection::handleClose fd=" << channel_->fd() << " state=" << (int)state_;
     setState(kDisconnected);
     channel_->disableAll();
 
@@ -203,7 +203,7 @@ void TcpConnection::handleError()
     {
         err = optval;
     }
-    LOG_ERROR("TcpConnection::handleError name:%s - SO_ERROR:%d\n", name_.c_str(), err);
+    LOG_ERROR << "TcpConnection::handleError name:" << name_ << " - SO_ERROR:" << err;
 }
 
 // 用户 => buffer => 内核
@@ -219,7 +219,7 @@ void TcpConnection::sendInLoop(const void *data, size_t len)
     // 之前调用过该connection的shutdown，不能再进行发送了
     if (state_ == kDisconnected)
     {
-        LOG_ERROR("disconnected, give up writing!\n");
+        LOG_ERROR << "disconnected, give up writing!";
         return;
     }
 
@@ -245,7 +245,7 @@ void TcpConnection::sendInLoop(const void *data, size_t len)
             nwrote = 0;
             if (errno != EWOULDBLOCK)   // EWOULDBLOCK表示：不是“真正错误”，只是“现在没数据”
             {
-                LOG_ERROR("TcpConnection::SendInLoop\n");
+                LOG_ERROR << "TcpConnection::sendInLoop() failed";
                 // EPIPE: 往一个已经关闭的连接写数据    ECONNRESET: 连接被对方“强制重置”
                 if (errno == EPIPE || errno == ECONNRESET)  // SIGPIPE  RESET
                 {

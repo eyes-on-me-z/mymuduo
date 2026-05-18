@@ -2,7 +2,7 @@
 
 #include "Acceptor.h"
 #include "TcpServer.h"
-#include "Logger.h"
+#include "Logging.h"
 #include "EventLoopThreadPool.h"
 #include "TcpConnection.h"
 #include "EventLoop.h"
@@ -14,7 +14,7 @@ static EventLoop* CheckLoopNotNull(EventLoop *loop)
 {
     if (loop == nullptr)
     {
-        LOG_FATAL("%s:%s:%d mainloop is null!\n", __FILE__, __FUNCTION__, __LINE__);
+        LOG_FATAL << "TcpServer::TcpServer() requires a non-nullptr EventLoop";
     }
     return loop;
 }
@@ -80,8 +80,8 @@ void TcpServer::newConnection(int sockfd, const InetAddress &peerAddr)
     ++nextConnId_;
     std::string connName = name_ + buf;
 
-    LOG_INFO("TcpServer::newConnection [%s] - new connection [%s] from %s\n",
-        name_.c_str(), connName.c_str(), peerAddr.toIpPort().c_str());
+    LOG_INFO << "TcpServer::newConnection [" << name_ << "] - new connection [" << connName
+             << "] from " << peerAddr.toIpPort();
 
     // 通过sockfd获取其绑定的本机的ip地址和端口信息
     // 一台服务器可能绑定了多个ip
@@ -90,7 +90,7 @@ void TcpServer::newConnection(int sockfd, const InetAddress &peerAddr)
     socklen_t len = sizeof local;
     if (::getsockname(sockfd, (struct sockaddr*)&local, &len) < 0)
     {
-        LOG_ERROR("sockets::getLocalAddr\n");
+        LOG_ERROR << "sockets::getLocalAddr() failed";
     }
     InetAddress localAddr(local);
 
@@ -122,8 +122,7 @@ void TcpServer::removeConnection(const TcpConnectionPtr &conn)
 
 void TcpServer::removeConnectionInLoop(const TcpConnectionPtr &conn)
 {
-    LOG_INFO("TcpServer::removeConnectionInLoop [%s] - connection %s\n",
-        name_.c_str(), conn->name().c_str());
+    LOG_INFO << "TcpServer::removeConnectionInLoop [" << name_ << "] - connection " << conn->name();
 
     connections_.erase(conn->name());
     EventLoop *ioLoop = conn->getLoop();
