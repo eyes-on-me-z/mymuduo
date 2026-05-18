@@ -304,7 +304,7 @@ private:
 
 #### shared_ptr是线程安全的吗？
 
-同一个shared_ptr被多个线程“读”是安全的。2、同一个shared_ptr被多个线程“写”是不安全的。3、共享引用计数的不同的shared_ptr被多个线程”写“ 是安全的
+同一个shared_ptr被多个线程“读”是安全的。2、同一个shared_ptr被多个线程“写”是不安全的。3、共享引用计数的不同的shared_ptr被多个线程”写“ 是安全的。多个线程并发对同一个shared_ptr进行拷贝构造时必须加锁。
 
 #### 为什么需要继承std::enable_shared_from_this<T>?
 

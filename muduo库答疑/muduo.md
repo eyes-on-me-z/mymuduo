@@ -30,6 +30,10 @@
 
 `pid_t` 是一个类型（typedef），表示**进程 ID**。`tid`（thread id）表示**线程 ID**
 
+POSIX标准规定pthread_t是一个不透明类型，在Linux下是unsigned long，其他系统中可能是结构体
+
+`pthread_t` 的生命周期仅限于线程运行期间。一旦线程结束并被 `join` 或 `detach`，该标识符代表的内存（通常是线程描述符的地址）会被系统收回，并可能**立即分配给新创建的线程**。
+
 #### TcpConnection使用shared_ptr来管理的原因
 
 TcpConnection是短命的，生命周期不一定由我们控制，某个时刻客户端断开连接，我们并不能立马delete这个对象。其他地方也可能持有它的引用。当旧的TCP发来一个request，处理这个request需要一点时间，在此期间如果旧的TCP连接一断开，立马销毁对象，关闭旧的文件描述符，而新的连接的sockfd可能和旧的fd一样，造成原本往旧的tcp连接发送的数据发给了新的tcp连接。为了应对这种情况，使用shared_ptr来管理TcpConnection的生命周期。
