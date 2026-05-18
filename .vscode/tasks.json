@@ -10,7 +10,13 @@
                 "-std=c++17",
                 "${file}",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-I", "${workspaceFolder}/src/base",
+                "-I", "${workspaceFolder}/src/net",
+                "-I", "${workspaceFolder}/src/logger",
+                "-I", "${workspaceFolder}/src/utils",
+                "-L", "${workspaceFolder}/lib",
+                "-lmymuduo",
             ],
             "options": {
                 "cwd": "${fileDirname}"

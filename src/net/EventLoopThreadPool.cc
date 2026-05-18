@@ -43,7 +43,7 @@ void EventLoopThreadPool::start(const ThreadInitCallback &cb)
     }
 
     // 整个服务端只有一个线程，运行着baseloop
-    if (numThreads_ == 0)
+    if (numThreads_ == 0 && cb) // 因为cb可能为空，所以要判断一下
     {
         cb(baseLoop_);
     }
