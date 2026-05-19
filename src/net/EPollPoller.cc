@@ -71,7 +71,7 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels)
 void EPollPoller::updateChannel(Channel *channel)
 {
     const int index = channel->index();
-    LOG_INFO << "func=" << __FUNCTION__ << " => fd=" << channel->fd()
+    LOG_TRACE << "fd=" << channel->fd()
             << ", events=" << channel->events() << ", index=" << index;
 
      // channel第一次注册到poller中，或者之前已经从poller中删除掉了，现在又重新注册
@@ -106,7 +106,7 @@ void EPollPoller::removeChannel(Channel *channel)
 {
     channels_.erase(channel->fd());
 
-    LOG_INFO << "func=" << __FUNCTION__ << " => fd=" << channel->fd();
+    LOG_TRACE << "fd=" << channel->fd();
 
     if (channel->index() == kAdded)
     {

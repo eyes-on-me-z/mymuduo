@@ -65,14 +65,14 @@ TcpConnection::TcpConnection(EventLoop *loop,
         std::bind(&TcpConnection::handleError, this)
     );
 
-    LOG_INFO << "TcpConnection::ctor[" << name_ << "] at fd=" << sockfd;
+    LOG_DEBUG << "TcpConnection::ctor[" << name_ << "] at " << this << " fd=" << sockfd;
     socket_->setKeepAlive(true);
 }
             
 TcpConnection::~TcpConnection()
 {
-    LOG_INFO << "TcpConnection::dtor[" << name_ << "] at fd=" <<
-                channel_->fd() << " state=" << (int)state_;
+    LOG_DEBUG << "TcpConnection::dtor[" << name_ << "] at " << this
+            << " fd=" << channel_->fd() << " state=" << stateToString();
 }
 
 // 发送数据（供用户发送数据）
@@ -196,7 +196,7 @@ void TcpConnection::handleWrite()
 // poller => channel::closeCallback => TcpConnection::handleClose
 void TcpConnection::handleClose()
 {
-    LOG_INFO << "TcpConnection::handleClose fd=" << channel_->fd() << " state=" << (int)state_;
+    LOG_TRACE << "fd=" << channel_->fd() << " state=" << stateToString();
     setState(kDisconnected);
     channel_->disableAll();
 
@@ -303,5 +303,22 @@ void TcpConnection::shutdownInLoop()
     if (!channel_->isWriting()) // 说明outputBuffer中的数据已经全部发送完成
     {
         socket_->shutdownWrite();   // 关闭写端
+    }
+}
+
+const char* TcpConnection::stateToString() const
+{
+    switch (state_)
+    {
+        case kDisconnected:
+            return "kDisconnected";
+        case kConnecting:
+            return "kConnecting";
+        case kConnected:
+            return "kConnected";
+        case kDisconnecting:
+            return "kDisconnecting";
+        default:
+            return "unknown state";
     }
 }

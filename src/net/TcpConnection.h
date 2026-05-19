@@ -81,6 +81,8 @@ private:
     void sendInLoop(const void *message, size_t len);
     void shutdownInLoop();
 
+    const char* stateToString() const;
+
     EventLoop *loop_;   // 这里绝对不是baseLoop， 因为TcpConnection都是在subLoop里面管理的
     const std::string name_;
     std::atomic_int state_;
