@@ -24,7 +24,7 @@ void defaultMessageCallback(const TcpConnectionPtr &conn,
                             Buffer *buffer,
                             Timestamp receiveTime)
 {
-    buffer->retrieveAll();
+    LOG_TRACE << "receive " << buffer->readableBytes() << " bytes: " << buffer->retrieveAllAsString();
 }
 
 static EventLoop* CheckLoopNotNull(EventLoop *loop)
@@ -80,6 +80,7 @@ void TcpConnection::send(const std::string &buf)
 {
     if (state_ == kConnected)
     {
+        // 如果当前执行的线程就是自己所属loop绑定的线程，则可以直接发送数据
         if (loop_->isInLoopThread())
         {
             sendInLoop(buf.c_str(), buf.size());
@@ -87,7 +88,26 @@ void TcpConnection::send(const std::string &buf)
         else
         {
             loop_->runInLoop(
-                std::bind(&TcpConnection::sendInLoop, this, buf.c_str(), buf.size())
+                std::bind((void(TcpConnection::*)(const std::string&))&TcpConnection::sendInLoop, this, buf)
+            );
+        }
+    }
+}
+
+void TcpConnection::send(Buffer *buf)
+{
+    if (state_ == kConnected)
+    {
+        // 如果当前执行的线程就是自己所属loop绑定的线程，则可以直接发送数据
+        if (loop_->isInLoopThread())
+        {
+            sendInLoop(buf->retrieveAllAsString());
+        }
+        else
+        {
+            std::string msg = buf->retrieveAllAsString();
+            loop_->runInLoop(
+                std::bind((void(TcpConnection::*)(const std::string&))&TcpConnection::sendInLoop, this, msg)
             );
         }
     }
@@ -295,6 +315,11 @@ void TcpConnection::sendInLoop(const void *data, size_t len)
             channel_->enableWriting();
         }
     }
+}
+
+void TcpConnection::sendInLoop(const std::string &message)
+{
+    sendInLoop(message.data(), message.size());
 }
 
 // 关闭写端

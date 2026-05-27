@@ -37,6 +37,7 @@ public:
 
     // 发送数据
     void send(const std::string &buf);
+    void send(Buffer *buf);
 
     // 关闭连接（服务器主动关闭，先关闭写端，等对方关闭后，再关闭读端）
     void shutdown();
@@ -73,12 +74,16 @@ private:
     enum StateE {kDisconnected, kConnecting, kConnected, kDisconnecting};
     void setState(StateE state) { state_ = state; }
 
+    // 注册到channel上有事件发生时，其回调函数就是绑定的下面这些函数
     void handleRead(Timestamp receiveTime);
     void handleWrite();
     void handleClose();
     void handleError();
 
+    // 在自己所属的loop中发送数据
     void sendInLoop(const void *message, size_t len);
+    void sendInLoop(const std::string &message);
+    // 在自己所属的loop中关闭连接
     void shutdownInLoop();
 
     const char* stateToString() const;
