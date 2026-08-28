@@ -44,6 +44,39 @@ TcpConnection是短命的，生命周期不一定由我们控制，某个时刻�
 
 被动关闭：TcpConnection::handleClose() => connectionCallback() 和 closeCallback() => TcpServer::removeConnection => TcpServer::removeConnectionInLoop => TcpConnection::connectionDestoryed => channel_->remove()
 
+#### TcpConnection的生命周期如何管理？如果 runInLoop 还没执行，TcpConnection 先析构了后面再调用 sendInLoop 就会变成野指针访问
+
+这里 loop_->runInLoop(std::bind(..., this, buf/msg)) 只是把成员函数丢进 EventLoop 的待执行队列，而 EventLoop::runInLoop/queueInLoop 明确会异步延后执行，见 src/net/EventLoop.cc (line 116)。
+如果这段时间连接已经被关闭并析构，后面执行到这个回调时就会对失效对象调用 sendInLoop，这是典型 use-after-free。
+这个问题比“能不能发出去”更严重，因为它是生命周期安全问题。
+
+答：
+
+```
+// 之前调用过该connection的shutdown，不能再进行发送了
+    if (state_ == kDisconnected)
+    {
+        LOG_ERROR << "disconnected, give up writing!";
+        return;
+    }
+```
+
+在发送前进行检查，如果连接关闭，那么不会发送，函数直接返回
+
+
+
+#### 关于void TcpConnection::send(const std::string &buf)参数buf失效问题
+
+loop_->runInLoop(
+    std::bind((void(TcpConnection::*)(const std::string&))&TcpConnection::sendInLoop, this, buf)
+);
+
+这里虽然 buf 是引用参数，但 std::bind(..., buf) 会把 buf 按值拷贝一份保存到回调对象里，所以即使外面的 buf 析构了，这份待发送字符串还在。
+
+
+
+
+
 
 
 
