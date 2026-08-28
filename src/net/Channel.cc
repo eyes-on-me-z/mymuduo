@@ -47,7 +47,8 @@ void Channel::handleEvent(Timestamp receiveTime)
 {
     if (tied_)
     {
-        std::shared_ptr<void> guard = tie_.lock();
+        // 如果TcpConnection还活着，guard会获得一个新的shared_ptr
+        std::shared_ptr<void> guard = tie_.lock();  // 确保在handleEvent期间，TcpConnection不会被析构
         if (guard)  // TcpConnection被析构后guard会变为nullptr，否则不为空
         {
             handleEventWithGuard(receiveTime);

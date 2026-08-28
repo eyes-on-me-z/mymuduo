@@ -51,3 +51,6 @@ TcpConnection是短命的，生命周期不一定由我们控制，某个时刻�
 
 
 tcpConnection的三个半事件以及生命周期问题、one Loop per thread的实现方式才是我对muduo感到最震撼的地方
+
+
+TcpConnection关联的Channel、Socket、Buffer都属于某个EventLoop线程管理。如果其他线程提前释放TcpConnection，可能导致当前Loop线程仍在执行handleEvent或回调函数时对象已经析构，产生use-after-free。因此Muduo要求连接的销毁、Channel移除、epoll_ctl(DEL)等操作最终都在所属EventLoop线程执行，保证线程亲和性（thread affinity）和生命周期安全。

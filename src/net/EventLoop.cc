@@ -113,6 +113,7 @@ void EventLoop::quit()
 }
 
 // 在当前loop中执行cb
+// 无需互斥锁保护，只在当前线程执行
 void EventLoop::runInLoop(Functor cb)
 {
     if (isInLoopThread())   // 在当前的loop线程中，执行cb
@@ -126,6 +127,7 @@ void EventLoop::runInLoop(Functor cb)
 }
 
 // 把cb放入队列中，唤醒loop所在的线程，执行cb
+// 需要互斥锁保护，其他线程都有可能调用
 void EventLoop::queueInLoop(Functor cb)
 {
     {
