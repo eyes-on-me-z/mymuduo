@@ -1,5 +1,5 @@
 #include <mymuduo/TcpServer.h>
-#include <mymuduo/Logger.h>
+#include <mymuduo/Logging.h>
 
 #include <string>
 #include <functional>
@@ -35,11 +35,11 @@ private:
     {
         if (conn->connected())
         {
-            LOG_INFO("Connection UP: %s\n", conn->peerAddress().toIpPort().c_str());
+            // LOG_INFO << "Connection UP: " << conn->peerAddress().toIpPort();
         }
         else
         {
-            LOG_INFO("Connection DOWN: %s\n", conn->peerAddress().toIpPort().c_str());
+            // LOG_INFO << "Connection DOWN: " << conn->peerAddress().toIpPort();
         }
     }
 
